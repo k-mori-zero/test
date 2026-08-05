@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.kintai.AttendanceMapper">
+
+    <!--
+        resultMap：DBのカラム名とJavaのフィールド名を対応づける設定
+        ・clock_in  → clockIn のように snake_case → camelCase の変換を明示する
+        ・user_id（Long）→ User オブジェクトへの変換は association タグで行う
+          JPAは自動でやってくれるが、MyBatisは明示的に指定が必要
+    -->
+    <resultMap id="attendanceMap" type="com.example.kintai.Attendance">
+        <id     property="id"       column="id"/>
+        <result property="date"     column="date"/>
+        <result property="clockIn"  column="clock_in"/>
+        <result property="clockOut" column="clock_out"/>
+        <result property="comment"  column="comment"/>
+        <!-- user_id カラムの値を User オブジェクトの id フィールドにセットする -->
+        <association property="user" javaType="com.example.kintai.User">
+            <id property="id" column="user_id"/>
+        </association>
+    </resultMap>
+
+    <!-- 指定ユーザー・指定日の打刻レコードを1件取得する -->
+    <select id="findByUserIdAndDate" resultMap="attendanceMap">
+        SELECT * FROM attendances WHERE user_id = #{userId} AND date = #{date}
+    </select>
+
+    <!-- 新しい打刻レコードをINSERTする（出勤時に呼ばれる） -->
+    <insert id="insert">
+        INSERT INTO attendances (user_id, date, clock_in)
+        VALUES (#{user.id}, #{date}, #{clockIn})
+    </insert>
+
+    <!-- 退勤時刻（clock_out）をUPDATEする -->
+    <update id="updateClockOut">
+        UPDATE attendances SET clock_out = #{clockOut}
+        WHERE user_id = #{user.id} AND date = #{date}
+    </update>
+
+    <!-- 指定ユーザー・指定期間の打刻レコードを全件取得する（履歴画面で使う） -->
+    <select id="findByUserIdAndDateBetween" resultMap="attendanceMap">
+        SELECT * FROM attendances
+        WHERE user_id = #{userId} AND date BETWEEN #{start} AND #{end}
+    </select>
+
+    <!-- コメントをUPDATEする -->
+    <update id="updateComment">
+        UPDATE attendances SET comment = #{comment}
+        WHERE user_id = #{user.id} AND date = #{date}
+    </update>
+
+</mapper>

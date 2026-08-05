@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <style>
+  /* 土曜：青、日曜・祝日：赤 → th:class で行ごとに条件付き適用 */
+  .saturday { color: blue; }
+  .sunday { color: red; }
+  .holiday { color: red; }
+  body {
+  background-color: #f0f2f5;
+  padding: 40px;
+  font-family: sans-serif;
+}
+
+.container {
+  background-color: white;
+  border-radius: 8px;
+  padding: 32px;
+  max-width: 800px;
+  margin: 0 auto;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #e0e0e0;
+  text-align: left;
+}
+
+thead tr {
+  background-color: #f8f8f8;
+}
+.btn-save {
+  background-color: black;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 12px;
+  cursor: pointer;
+  font-size: 13px;
+}
+button {
+  cursor: pointer;
+}
+    </style>
+  <title>履歴一覧画面</title>
+</head>
+<body>
+<div class="container">
+  <h1>履歴一覧画面</h1>
+
+  <form method="get" action="/attendance/history">
+  <select name="year">
+    <option th:value="2025" th:selected="${selectedYear == 2025}">2025年</option>
+    <option th:value="2026" th:selected="${selectedYear == 2026}">2026年</option>
+  </select>
+  <select name="month">
+    <option th:each="m : ${#numbers.sequence(1, 12)}"
+            th:value="${m}"
+            th:text="${m + '月'}"
+            th:selected="${selectedMonth == m}">
+    </option>
+  </select>
+  <button type="submit">表示</button>
+</form>
+
+  <table>
+    <thead>
+      <tr>
+        <th>日付</th>
+        <th>曜日</th>
+        <th>出勤</th>
+        <th>退勤</th>
+        <th>コメント</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- allDays の日付を1行ずつ繰り返す -->
+      <tr th:each="day : ${allDays}" th:class="${day.dayOfWeek.name() == 'SATURDAY' ? 'saturday' : (day.dayOfWeek.name() == 'SUNDAY' ? 'sunday' : (holidayDates.contains(day) ? 'holiday' : ''))}">
+        <td th:text="${day}"></td>
+        <td th:text="${day.dayOfWeek.getDisplayName(T(java.time.format.TextStyle).SHORT, T(java.util.Locale).JAPANESE)}"></td>
+        <td th:text="${attendanceMap.get(day) != null ? attendanceMap.get(day).clockIn : ''}"></td>
+        <td th:text="${attendanceMap.get(day) != null ? attendanceMap.get(day).clockOut : ''}"></td>
+        <td>
+        <span th:text="${attendanceMap.get(day) != null ? attendanceMap.get(day).comment : ''}"></span>
+        <!-- th:if：打刻データがある行だけコメント入力欄と保存ボタンを表示する -->
+        <form th:if="${attendanceMap.get(day) != null}" method="post" action="/attendance/comment" style="display:inline;">
+            <input type="hidden" name="date" th:value="${day}">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+            <input type="text" name="comment" th:value="${attendanceMap.get(day).comment}">
+            <button type="submit" class="btn-save">保存</button>
+        </form>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <a href="/attendance/stamp">打刻画面へ</a>
+</div>
+</body>
+</html>

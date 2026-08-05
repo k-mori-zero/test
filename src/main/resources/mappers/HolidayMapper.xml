@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.kintai.HolidayMapper">
+
+    <!-- 指定期間の祝日レコードを全件取得する（履歴画面の祝日色分けで使う） -->
+    <select id="findByDateBetween" resultType="com.example.kintai.Holiday">
+        SELECT * FROM holidays WHERE date BETWEEN #{start} AND #{end}
+    </select>
+
+</mapper>
